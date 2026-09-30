@@ -1,0 +1,22 @@
+name: TeamSplit
+version: '${version}'
+main: dev.exiledddev.teamsplit.TeamSplitPlugin
+api-version: '1.21.11'
+description: Split online players into teams and run commands for a whole team at once.
+author: exiledddev
+website: https://github.com/exiledddev/teamsplit
+
+# Commands are registered through Paper's Brigadier API, so there is no commands: section.
+permissions:
+  teamsplit.manage:
+    description: Use /teams to split, edit, list and clear teams.
+    default: op
+  teamsplit.run:
+    description: Use /teamrun to run a command for every member of a team.
+    default: op
+  teamsplit.run.sudo:
+    description: Use /teamrun --sudo to make each member run the command themselves.
+    default: op
+  teamsplit.exempt:
+    description: Never put into a team by /teams split (give this to your director and cast).
+    default: false
