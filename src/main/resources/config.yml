@@ -1,0 +1,24 @@
+# TeamSplit configuration. Run /teams reload after editing this file.
+
+split:
+  # Leave players in spectator mode out of /teams split.
+  exclude-spectators: true
+  # Leave vanished players out of /teams split. Works with vanish plugins that
+  # set the standard "vanished" metadata (SuperVanish, PremiumVanish, EssentialsX, ...).
+  exclude-vanished: true
+
+# Applied to every team TeamSplit creates. Changes here only affect teams created
+# afterwards; tweak existing teams with vanilla /team modify <team> ...
+team-defaults:
+  # Can teammates hurt each other?
+  friendly-fire: true
+  # Can teammates see each other while invisible?
+  see-friendly-invisibles: true
+  # always, never, hide-for-other-teams, hide-for-own-team
+  nametag-visibility: always
+  # always, never, push-other-teams, push-own-team
+  collision: always
+  # Text shown in front of member names (chat, tab list, nametags), in the team's color.
+  # MiniMessage format; <team> is replaced with the team name. Example: "[<team>] "
+  # Leave empty to show no prefix (only the name color changes).
+  prefix: ""
