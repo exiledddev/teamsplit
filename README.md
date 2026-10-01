@@ -35,6 +35,8 @@ Teams are ordinary vanilla scoreboard teams. That means `@a[team=red]` works in 
 | `/teams include <players>` | Lets excluded players be split again. |
 | `/teams color <team> <color>` | Changes a team's color. |
 | `/teams glow <team\|all> on\|off` | Makes members glow in their team color. |
+| `/teams colors on\|off` | Shows or hides team colors on names, nametags and glow, for every team (including ones made later). Each team's color is remembered, so `on` brings it back. |
+| `/teams nametags show\|hide` | Shows or hides nametags for every team (including ones made later). |
 | `/teams list` | Lists each team and its members (offline members are grayed out), then the excluded players and any online players who aren't on a team. |
 | `/teams disband <team>` | Deletes one team. |
 | `/teams clear` | Deletes every TeamSplit team and removes the glow TeamSplit added. |
@@ -83,6 +85,18 @@ Vanilla selectors keep working without `/teamrun`, too: `/effect give @a[team=bl
 
 `/teams glow red on` makes red members glow red, which is handy for checking who's on which side during setup. Remember to turn it off (or run `/teams clear`) before you film. TeamSplit remembers whose glow it turned on. Players who were offline at the time get their glow fixed when they rejoin. Glow from other sources, such as the Glowing effect or spectral arrows, is never touched.
 
+### Getting teams out of the shot
+
+Team colors and nametags help while you set up a scene but get in the way on camera. Before you roll:
+
+```
+/teams glow all off          stop the glow
+/teams colors off            names and nametags go back to normal (white)
+/teams nametags hide         or hide nametags completely
+```
+
+Turn them back on with `/teams colors on` and `/teams nametags show`. Both settings are saved, so they stay the way you left them for new splits and after a restart. The teams themselves keep working the whole time: `/teamrun` and `@a[team=red]` don't care about colors.
+
 ## Permissions
 
 | Permission | Default | Allows |
@@ -104,7 +118,8 @@ split:
 team-defaults:                  # applied to teams created from now on
   friendly-fire: true
   see-friendly-invisibles: true
-  nametag-visibility: always    # always, never, hide-for-other-teams, hide-for-own-team
+  color: true                   # show team colors (/teams colors on|off overrides this)
+  nametag-visibility: always    # always, never, hide-for-other-teams, hide-for-own-team (/teams nametags overrides this)
   collision: always             # always, never, push-other-teams, push-own-team
   prefix: ""                    # e.g. "[<team>] " to show [red] before names; empty = color only
 ```

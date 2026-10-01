@@ -14,7 +14,11 @@ team-defaults:
   friendly-fire: true
   # Can teammates see each other while invisible?
   see-friendly-invisibles: true
+  # Show team colors on names, nametags and glow. /teams colors on|off overrides this
+  # (for current and new teams) until you change it again with that command.
+  color: true
   # always, never, hide-for-other-teams, hide-for-own-team
+  # /teams nametags show|hide overrides this the same way.
   nametag-visibility: always
   # always, never, push-other-teams, push-own-team
   collision: always

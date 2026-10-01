@@ -56,9 +56,11 @@ public final class TeamManager {
         boolean pruned = false;
         final Iterator<String> names = this.data.teams.keySet().iterator();
         while (names.hasNext()) {
-            final Team team = scoreboard.getTeam(names.next());
+            final String name = names.next();
+            final Team team = scoreboard.getTeam(name);
             if (team == null) {
                 names.remove();
+                this.data.colors.remove(name);
                 pruned = true;
             } else {
                 teams.add(team);
@@ -98,6 +100,28 @@ public final class TeamManager {
             .map(Bukkit::getPlayerExact)
             .filter(Objects::nonNull)
             .toList();
+    }
+
+    /** The team's color, even while colors are hidden. */
+    public NamedTextColor colorOf(final Team team) {
+        final NamedTextColor stored = this.data.colors.get(team.getName());
+        if (stored != null) {
+            return stored;
+        }
+        // Teams made before colors were saved: remember the color they have now.
+        final NamedTextColor current = team.hasColor() ? NamedTextColor.nearestTo(team.color()) : NamedTextColor.WHITE;
+        this.data.colors.put(team.getName(), current);
+        return current;
+    }
+
+    /** Whether team colors show on names and nametags: /teams colors, or team-defaults.color until that's used. */
+    public boolean colorsShown() {
+        return this.data.colorsShown != null ? this.data.colorsShown : this.settings.get().color();
+    }
+
+    /** Whether nametags show: /teams nametags, or team-defaults.nametag-visibility until that's used. */
+    public boolean nametagsShown() {
+        return this.data.nametagsShown != null ? this.data.nametagsShown : this.settings.get().nametagVisibility() != Team.OptionStatus.NEVER;
     }
 
     public boolean isGlowing(final Team team) {
@@ -210,7 +234,7 @@ public final class TeamManager {
 
         final List<Team> existing = this.teams();
         final NamedTextColor teamColor = color != null ? color : TeamPalette.nextColor(
-            existing.stream().filter(Team::hasColor).map(team -> NamedTextColor.nearestTo(team.color())).toList(),
+            existing.stream().map(this::colorOf).toList(),
             existing.size()
         );
         final Team team = this.register(name, teamColor);
@@ -222,16 +246,21 @@ public final class TeamManager {
         final PluginSettings settings = this.settings.get();
         final Team team = scoreboard().registerNewTeam(name);
         this.data.teams.put(name, false);
-        this.applyColor(team, color);
+        this.data.colors.put(name, color);
+        this.applyColor(team);
+        this.applyNametags(team);
         team.setAllowFriendlyFire(settings.friendlyFire());
         team.setCanSeeFriendlyInvisibles(settings.seeFriendlyInvisibles());
-        team.setOption(Team.Option.NAME_TAG_VISIBILITY, settings.nametagVisibility());
         team.setOption(Team.Option.COLLISION_RULE, settings.collision());
         return team;
     }
 
-    /** Sets the team color, its colored display name, and the configured prefix in that color. */
-    private void applyColor(final Team team, final NamedTextColor color) {
+    /**
+     * Sets the team color, display name and configured prefix, all in the team's color, or all
+     * uncolored while colors are hidden.
+     */
+    private void applyColor(final Team team) {
+        final NamedTextColor color = this.colorsShown() ? this.colorOf(team) : null;
         team.color(color);
         team.displayName(Component.text(team.getName(), color));
         final String prefix = this.settings.get().prefix();
@@ -240,8 +269,34 @@ public final class TeamManager {
             : Msg.MINI_MESSAGE.deserialize(prefix, Placeholder.unparsed("team", team.getName())).colorIfAbsent(color));
     }
 
+    /** Shows nametags the way team-defaults.nametag-visibility says, or hides them. */
+    private void applyNametags(final Team team) {
+        final Team.OptionStatus configured = this.settings.get().nametagVisibility();
+        final Team.OptionStatus shown = configured == Team.OptionStatus.NEVER ? Team.OptionStatus.ALWAYS : configured;
+        team.setOption(Team.Option.NAME_TAG_VISIBILITY, this.nametagsShown() ? shown : Team.OptionStatus.NEVER);
+    }
+
+    /** Changes a team's color. While colors are hidden it's remembered and shows once they're back on. */
     public void setColor(final Team team, final NamedTextColor color) {
-        this.applyColor(team, color);
+        this.data.colors.put(team.getName(), color);
+        this.applyColor(team);
+        this.data.save();
+    }
+
+    /** /teams colors on|off: shows or hides team colors on every TeamSplit team, now and for new teams. */
+    public void setColorsShown(final boolean shown) {
+        final List<Team> teams = this.teams();
+        teams.forEach(this::colorOf); // remember each color before it's stripped
+        this.data.colorsShown = shown;
+        teams.forEach(this::applyColor);
+        this.data.save();
+    }
+
+    /** /teams nametags show|hide: shows or hides nametags on every TeamSplit team, now and for new teams. */
+    public void setNametagsShown(final boolean shown) {
+        this.data.nametagsShown = shown;
+        this.teams().forEach(this::applyNametags);
+        this.data.save();
     }
 
     /**
@@ -294,6 +349,7 @@ public final class TeamManager {
     private void disbandQuietly(final Team team) {
         final List<Player> members = this.onlineMembers(team);
         this.data.teams.remove(team.getName());
+        this.data.colors.remove(team.getName());
         team.unregister();
         members.forEach(this::refreshGlow);
     }
