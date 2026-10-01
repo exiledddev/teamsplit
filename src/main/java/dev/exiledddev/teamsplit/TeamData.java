@@ -13,7 +13,9 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.configuration.ConfigurationSection;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.jspecify.annotations.Nullable;
 
 /**
  * What TeamSplit remembers across restarts, stored in data.yml. The teams themselves are vanilla
@@ -30,6 +32,12 @@ final class TeamData {
     final Map<UUID, String> excluded = new LinkedHashMap<>();
     /** Players whose glow TeamSplit turned on, so it only ever turns off glow it caused. */
     final Set<UUID> glowing = new HashSet<>();
+    /** Each team's color, kept even while colors are hidden so /teams colors on can restore it. */
+    final Map<String, NamedTextColor> colors = new HashMap<>();
+    /** Set by /teams colors on|off; null means follow team-defaults.color in config.yml. */
+    @Nullable Boolean colorsShown;
+    /** Set by /teams nametags show|hide; null means follow team-defaults.nametag-visibility. */
+    @Nullable Boolean nametagsShown;
 
     TeamData(final File file, final Logger logger) {
         this.file = file;
@@ -42,6 +50,9 @@ final class TeamData {
         for (final Map<?, ?> entry : yaml.getMapList("teams")) {
             if (entry.get("name") instanceof String name) {
                 this.teams.put(name, Boolean.TRUE.equals(entry.get("glow")));
+                if (entry.get("color") instanceof String colorName && NamedTextColor.NAMES.value(colorName) != null) {
+                    this.colors.put(name, NamedTextColor.NAMES.value(colorName));
+                }
             }
         }
 
@@ -61,6 +72,9 @@ final class TeamData {
                 this.glowing.add(uuid);
             }
         }
+
+        this.colorsShown = yaml.isBoolean("colors-shown") ? yaml.getBoolean("colors-shown") : null;
+        this.nametagsShown = yaml.isBoolean("nametags-shown") ? yaml.getBoolean("nametags-shown") : null;
     }
 
     void save() {
@@ -72,6 +86,10 @@ final class TeamData {
             final Map<String, Object> entry = new LinkedHashMap<>();
             entry.put("name", name);
             entry.put("glow", glow);
+            final NamedTextColor color = this.colors.get(name);
+            if (color != null) {
+                entry.put("color", NamedTextColor.NAMES.key(color));
+            }
             teamList.add(entry);
         });
         yaml.set("teams", teamList);
@@ -81,6 +99,8 @@ final class TeamData {
         yaml.createSection("excluded", excludedMap);
 
         yaml.set("glowing", this.glowing.stream().map(UUID::toString).sorted().toList());
+        yaml.set("colors-shown", this.colorsShown);
+        yaml.set("nametags-shown", this.nametagsShown);
 
         try {
             yaml.save(this.file);

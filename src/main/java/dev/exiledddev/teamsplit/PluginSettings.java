@@ -13,6 +13,7 @@ public record PluginSettings(
     boolean excludeVanished,
     boolean friendlyFire,
     boolean seeFriendlyInvisibles,
+    boolean color,
     Team.OptionStatus nametagVisibility,
     Team.OptionStatus collision,
     String prefix
@@ -24,6 +25,7 @@ public record PluginSettings(
             config.getBoolean("split.exclude-vanished", true),
             config.getBoolean("team-defaults.friendly-fire", true),
             config.getBoolean("team-defaults.see-friendly-invisibles", true),
+            config.getBoolean("team-defaults.color", true),
             parseStatus(config.getString("team-defaults.nametag-visibility", "always"), "team-defaults.nametag-visibility", logger),
             parseStatus(config.getString("team-defaults.collision", "always"), "team-defaults.collision", logger),
             config.getString("team-defaults.prefix", "")

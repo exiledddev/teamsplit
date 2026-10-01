@@ -45,6 +45,8 @@ public final class TeamsCommand {
         new HelpEntry("/teams include <players>", "/teams include ", "let excluded players be split again"),
         new HelpEntry("/teams color <team> <color>", "/teams color ", "change a team's color"),
         new HelpEntry("/teams glow <team|all> on|off", "/teams glow ", "glow in team colors"),
+        new HelpEntry("/teams colors on|off", "/teams colors ", "show or hide team colors on names"),
+        new HelpEntry("/teams nametags show|hide", "/teams nametags ", "show or hide nametags"),
         new HelpEntry("/teams list", "/teams list", "show teams and members"),
         new HelpEntry("/teams disband <team>", "/teams disband ", "delete one team"),
         new HelpEntry("/teams clear", "/teams clear", "delete all TeamSplit teams"),
@@ -99,6 +101,12 @@ public final class TeamsCommand {
                 .then(this.teamArgument(true)
                     .then(Commands.literal("on").executes(ctx -> this.glow(ctx, true)))
                     .then(Commands.literal("off").executes(ctx -> this.glow(ctx, false)))))
+            .then(Commands.literal("colors")
+                .then(Commands.literal("on").executes(ctx -> this.colors(ctx, true)))
+                .then(Commands.literal("off").executes(ctx -> this.colors(ctx, false))))
+            .then(Commands.literal("nametags")
+                .then(Commands.literal("show").executes(ctx -> this.nametags(ctx, true)))
+                .then(Commands.literal("hide").executes(ctx -> this.nametags(ctx, false))))
             .then(Commands.literal("list").executes(this::list))
             .then(Commands.literal("disband")
                 .then(this.teamArgument(false)
@@ -248,8 +256,36 @@ public final class TeamsCommand {
         if (team == null) {
             return 0;
         }
-        this.manager.setColor(team, ctx.getArgument("color", NamedTextColor.class));
-        Msg.success(ctx.getSource().getSender(), "Changed the color of <team>.", Msg.team(team));
+        final NamedTextColor color = ctx.getArgument("color", NamedTextColor.class);
+        this.manager.setColor(team, color);
+        if (this.manager.colorsShown()) {
+            Msg.success(ctx.getSource().getSender(), "Changed the color of <team>.", Msg.team(team));
+        } else {
+            Msg.success(ctx.getSource().getSender(), "Changed the color of <team>. Colors are off, so it shows once you run /teams colors on.",
+                Msg.component("team", Component.text(team.getName(), color)));
+        }
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private int colors(final CommandContext<CommandSourceStack> ctx, final boolean on) {
+        this.manager.setColorsShown(on);
+        if (on) {
+            Msg.success(ctx.getSource().getSender(), "Team colors are back on names, nametags and glow.");
+        } else {
+            Msg.success(ctx.getSource().getSender(), "Team colors are off: names and nametags look normal, and glow is white. "
+                + "Teams made from now on stay uncolored too. Turn them back on with /teams colors on.");
+        }
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private int nametags(final CommandContext<CommandSourceStack> ctx, final boolean show) {
+        this.manager.setNametagsShown(show);
+        if (show) {
+            Msg.success(ctx.getSource().getSender(), "Nametags are showing again for every team.");
+        } else {
+            Msg.success(ctx.getSource().getSender(), "Nametags are hidden for every team, including teams made from now on. "
+                + "Show them again with /teams nametags show.");
+        }
         return Command.SINGLE_SUCCESS;
     }
 
@@ -290,6 +326,11 @@ public final class TeamsCommand {
         } else {
             Msg.info(sender, "<count> team(s):", Msg.text("count", teams.size()));
             teams.forEach(team -> this.sendTeamLine(sender, team));
+            if (!this.manager.colorsShown() || !this.manager.nametagsShown()) {
+                Msg.line(sender, " <gray>Colors: <colors>, nametags: <nametags></gray>",
+                    Msg.text("colors", this.manager.colorsShown() ? "on" : "off"),
+                    Msg.text("nametags", this.manager.nametagsShown() ? "shown" : "hidden"));
+            }
         }
 
         final List<String> excluded = this.manager.excludedNames();
@@ -384,8 +425,8 @@ public final class TeamsCommand {
         final String details = online + "/" + entries.size() + " online" + (this.manager.isGlowing(team) ? ", glowing" : "");
 
         Msg.line(sender, " <square> <team> <gray>(<details>):</gray> <members>",
-            Msg.component("square", Component.text("■", Msg.colorOf(team))),
-            Msg.team(team),
+            Msg.component("square", Component.text("■", this.manager.colorOf(team))),
+            Msg.component("team", Component.text(team.getName(), this.manager.colorOf(team))),
             Msg.text("details", details),
             Msg.component("members", members));
     }
