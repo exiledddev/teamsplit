@@ -86,7 +86,7 @@ public final class TeamRunCommand {
         int offline = 0;
         for (final Team team : teams) {
             for (final String entry : team.getEntries()) {
-                final Player player = Bukkit.getPlayerExact(entry);
+                final Player player = TeamManager.onlinePlayer(entry);
                 if (player == null) {
                     offline++;
                 } else {
