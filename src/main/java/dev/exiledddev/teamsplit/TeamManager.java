@@ -97,9 +97,23 @@ public final class TeamManager {
 
     public List<Player> onlineMembers(final Team team) {
         return team.getEntries().stream()
-            .map(Bukkit::getPlayerExact)
+            .map(TeamManager::onlinePlayer)
             .filter(Objects::nonNull)
             .toList();
+    }
+
+    /**
+     * The online player whose current name is this scoreboard entry. Matches against each player's
+     * current name rather than using {@link Bukkit#getPlayerExact}, which can still only know a
+     * player by their original login name after a nickname plugin (such as Rename) renames them.
+     */
+    public static @Nullable Player onlinePlayer(final String entry) {
+        for (final Player player : Bukkit.getOnlinePlayers()) {
+            if (player.getName().equals(entry)) {
+                return player;
+            }
+        }
+        return null;
     }
 
     /** The team's color, even while colors are hidden. */

@@ -416,11 +416,11 @@ public final class TeamsCommand {
     /** " ■ red (3/4 online, glowing): Steve, Alex, ..." with offline members grayed out. */
     private void sendTeamLine(final CommandSender sender, final Team team) {
         final List<String> entries = team.getEntries().stream().sorted(String.CASE_INSENSITIVE_ORDER).toList();
-        final long online = entries.stream().filter(entry -> Bukkit.getPlayerExact(entry) != null).count();
+        final long online = entries.stream().filter(entry -> TeamManager.onlinePlayer(entry) != null).count();
         final Component members = entries.isEmpty()
             ? Component.text("nobody yet", NamedTextColor.DARK_GRAY)
             : Component.join(JoinConfiguration.commas(true), entries.stream()
-                .map(entry -> Component.text(entry, Bukkit.getPlayerExact(entry) != null ? NamedTextColor.WHITE : NamedTextColor.DARK_GRAY))
+                .map(entry -> Component.text(entry, TeamManager.onlinePlayer(entry) != null ? NamedTextColor.WHITE : NamedTextColor.DARK_GRAY))
                 .toList());
         final String details = online + "/" + entries.size() + " online" + (this.manager.isGlowing(team) ? ", glowing" : "");
 

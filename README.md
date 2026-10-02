@@ -97,6 +97,12 @@ Team colors and nametags help while you set up a scene but get in the way on cam
 
 Turn them back on with `/teams colors on` and `/teams nametags show`. Both settings are saved, so they stay the way you left them for new splits and after a restart. The teams themselves keep working the whole time: `/teamrun` and `@a[team=red]` don't care about colors.
 
+### Nicknames
+
+TeamSplit works with nickname plugins that rename players, such as [Rename](https://github.com/exiledddev/rename):
+- Team members are matched by their current name, so a renamed player stays on their team.
+- In `/teamrun`, `{player}` becomes the player's UUID whenever their name can't be looked up, so commands still reach them. Vanilla commands and `execute as` accept UUIDs.
+
 ## Permissions
 
 | Permission | Default | Allows |

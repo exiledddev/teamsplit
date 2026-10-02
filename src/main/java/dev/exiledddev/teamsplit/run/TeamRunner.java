@@ -47,9 +47,18 @@ public final class TeamRunner {
         }
     }
 
+    /**
+     * What {player} becomes: the player's name, or their UUID if a name lookup wouldn't find them,
+     * which happens while a nickname plugin has renamed them. Vanilla commands and selectors such
+     * as {@code execute as} accept UUIDs.
+     */
+    static String commandName(final Player player) {
+        return Bukkit.getPlayerExact(player.getName()) == player ? player.getName() : player.getUniqueId().toString();
+    }
+
     private void dispatch(final CommandSender sender, final RunRequest request, final Target target) {
         final CommandSender executor = request.mode() == RunRequest.Mode.SUDO ? target.player() : sender;
-        final String line = request.commandFor(target.player().getName(), target.team());
+        final String line = request.commandFor(commandName(target.player()), target.team());
         try {
             Bukkit.dispatchCommand(executor, line);
         } catch (final CommandException e) {
